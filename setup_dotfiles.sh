@@ -4,8 +4,8 @@
 git init --bare $HOME/.cfg
 
 # Add 'cfg' alias to the shell configuration
-echo "alias cfg='/usr/bin/git --git-dir=\$HOME/.cfg/ --work-tree=\$HOME'" >> $HOME/.bashrc
-source $HOME/.bashrc
+echo "alias cfg='/usr/bin/git --git-dir=\$HOME/.cfg/ --work-tree=\$HOME'" >> $HOME/.zshrc
+source $HOME/.zshrc
 
 # Add the remote repository
 cfg remote add origin https://github.com/Cdaprod/cda.cfg.git

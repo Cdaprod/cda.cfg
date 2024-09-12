@@ -58,7 +58,6 @@ Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'} " Syntax highlightin
 Plug 'nvim-treesitter/playground'                        " Syntax playground
 Plug 'kyazdani42/nvim-web-devicons'                      " File explorer icons
 Plug 'kyazdani42/nvim-tree.lua'                          " File explorer
-Plug 'glepnir/galaxyline.nvim'                           " Status line
 Plug 'nvim-telescope/telescope-dap.nvim'                 " Debugging integration
 Plug 'mfussenegger/nvim-dap'                             " Debugging
 Plug 'mfussenegger/nvim-dap-python'                      " Python debugging
@@ -143,6 +142,39 @@ cmp.setup({
     ['<CR>'] = cmp.mapping.confirm({ select = true }),
   }),
   sources = cmp.config.sources({
+    { name = 'nvim_lsp' },
+    { name = 'buffer' },
+  })
+})
+EOF
+
+lua << EOF
+-- Copilot Configuration
+require("copilot").setup({
+  suggestion = { enabled = true },
+  panel = { enabled = true },
+})
+
+-- Copilot CMP Configuration
+require("copilot_cmp").setup()
+
+-- Nvim CMP Configuration
+local cmp = require'cmp'
+cmp.setup({
+  snippet = {
+    expand = function(args)
+      require('luasnip').lsp_expand(args.body)
+    end,
+  },
+  mapping = cmp.mapping.preset.insert({
+    ['<C-b>'] = cmp.mapping.scroll_docs(-4),
+    ['<C-f>'] = cmp.mapping.scroll_docs(4),
+    ['<C-Space>'] = cmp.mapping.complete(),
+    ['<C-e>'] = cmp.mapping.abort(),
+    ['<CR>'] = cmp.mapping.confirm({ select = true }),
+  }),
+  sources = cmp.config.sources({
+    { name = 'copilot' },  -- Add copilot source for cmp
     { name = 'nvim_lsp' },
     { name = 'buffer' },
   })
@@ -275,3 +307,161 @@ vnoremap <silent> <leader>ds <ESC>:lua require('dap-python').debug_selection()<C
 
 " Clean startup no message windows
 autocmd VimEnter * silent! redraw!
+let $PATH = $PATH . ':/usr/bin'
+
+" Enable TrueColor
+if exists('$COLORTERM')
+    if $COLORTERM ==# 'truecolor'
+        set termguicolors
+    endif
+endif
+
+" Shellfish Integration
+if $LC_TERMINAL ==# 'ShellFish'
+    set clipboard=unnamed,unnamedplus  " Use iOS clipboard
+
+    " Ensure ShellFish can handle tmux properly
+    if exists('$TMUX')
+        let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
+        let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
+        " Enable mouse mode in tmux
+        set mouse=a
+    endif
+endif
+
+" Plugin Management with vim-plug
+call plug#begin('~/.config/nvim/plugged')
+
+" Plugins List
+Plug 'nvim-lualine/lualine.nvim'        " Lualine status line
+Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'} " Syntax highlighting
+Plug 'janoamaral/tokyo-night-tmux'      " Tokyo Night TMUX theme
+
+call plug#end()
+
+" Automatically install missing plugins on startup
+autocmd VimEnter *
+  \ if len(filter(values(g:plugs), '!isdirectory(v:val.dir)'))
+  \| PlugInstall --sync | q
+  \| endif
+
+" ---- nvim-dap setup for multiple languages ----
+lua << EOF
+local dap = require('dap')
+
+-- JavaScript/TypeScript configuration
+dap.adapters.node2 = {
+  type = 'executable',
+  command = 'node',
+  args = {os.getenv('HOME') .. '/.vscode-node-debug2/out/src/nodeDebug.js'},
+}
+
+dap.configurations.javascript = {
+  {
+    name = "Launch file",
+    type = "node2",
+    request = "launch",
+    program = "${file}",
+    cwd = vim.fn.getcwd(),
+    sourceMaps = true,
+    protocol = "inspector",
+    console = "integratedTerminal",
+  },
+  {
+    name = "Attach to process",
+    type = "node2",
+    request = "attach",
+    processId = require('dap.utils').pick_process,
+  },
+}
+
+dap.configurations.typescript = dap.configurations.javascript
+
+-- Go configuration
+dap.adapters.go = {
+  type = "server",
+  port = "${port}",
+  executable = {
+    command = "dlv",
+    args = { "dap", "-l", "127.0.0.1:${port}" },
+  }
+}
+
+dap.configurations.go = {
+  {
+    type = "go",
+    name = "Debug",
+    request = "launch",
+    program = "${file}",
+  },
+  {
+    type = "go",
+    name = "Attach",
+    mode = "remote",
+    request = "attach",
+    processId = require('dap.utils').pick_process,
+    program = "${file}",
+  }
+}
+
+-- Python configuration
+dap.adapters.python = {
+  type = 'executable';
+  command = 'python';
+  args = { '-m', 'debugpy.adapter' };
+}
+
+dap.configurations.python = {
+  {
+    type = 'python';
+    request = 'launch';
+    name = "Launch file";
+    program = "${file}";
+    pythonPath = function()
+      return '/usr/bin/python'  -- Adjust this to your Python path
+    end;
+  },
+}
+
+-- React Native / Chrome debugging
+dap.adapters.chrome = {
+  type = "executable",
+  command = "node",
+  args = { os.getenv("HOME") .. "/path-to/vscode-chrome-debug/out/src/chromeDebug.js" }
+}
+
+dap.configurations.javascriptreact = { -- React
+  {
+    name = "Debug React",
+    type = "chrome",
+    request = "launch",
+    program = "${file}",
+    cwd = vim.fn.getcwd(),
+    sourceMaps = true,
+    protocol = "inspector",
+    port = 9222,
+    webRoot = "${workspaceFolder}"
+  }
+}
+
+dap.configurations.typescriptreact = dap.configurations.javascriptreact
+
+-- Optional: DAP UI for a better debugging experience
+require("dapui").setup()
+
+-- Optional: Virtual text for inline debugging
+require("nvim-dap-virtual-text").setup()
+
+EOF
+
+" ---- nvim-dap keybindings ----
+lua << EOF
+-- Keybindings for DAP
+vim.api.nvim_set_keymap('n', '<F5>', ":lua require'dap'.continue()<CR>", { noremap = true })
+vim.api.nvim_set_keymap('n', '<F10>', ":lua require'dap'.step_over()<CR>", { noremap = true })
+vim.api.nvim_set_keymap('n', '<F11>', ":lua require'dap'.step_into()<CR>", { noremap = true })
+vim.api.nvim_set_keymap('n', '<F12>', ":lua require'dap'.step_out()<CR>", { noremap = true })
+vim.api.nvim_set_keymap('n', '<leader>b', ":lua require'dap'.toggle_breakpoint()<CR>", { noremap = true })
+vim.api.nvim_set_keymap('n', '<leader>B', ":lua require'dap'.set_breakpoint(vim.fn.input('Breakpoint condition: '))<CR>", { noremap = true })
+vim.api.nvim_set_keymap('n', '<leader>dr', ":lua require'dap'.repl.open()<CR>", { noremap = true })
+EOF

@@ -31,7 +31,7 @@ nnoremap <C-x> :wq<CR>
 nnoremap <C-c> :q!<CR>
 
 " ---- Plugin Management with vim-plug ----
-let vimplug_exists = expand('~/.config/nvim/autoload/plug.vim')
+let vimplug_exists = expand('~/.con
 if !filereadable(vimplug_exists)
   if !executable('curl')
     echoerr "You have to install curl or first install vim-plug yourself!"
@@ -44,34 +44,35 @@ endif
 
 call plug#begin('~/.config/nvim/plugged')
 
-" Plugins List
-Plug 'nvim-lualine/lualine.nvim'			" Lualine status line
-Plug 'tpope/vim-sensible'                              " Sensible defaults
-Plug 'sainnhe/edge'                                     " Color schemes
-Plug 'neovim/nvim-lspconfig'                            " LSP
-Plug 'SirVer/ultisnips'                                  " Code snippets
-Plug 'honza/vim-snippets'                                " Code snippets
-Plug 'nvim-lua/popup.nvim'                               " Fuzzy finder dependencies
-Plug 'nvim-lua/plenary.nvim'                             " Fuzzy finder dependencies
-Plug 'nvim-telescope/telescope.nvim'                     " Fuzzy finder
+" ---- Plugins List ----
+Plug 'nvim-lualine/lualine.nvim'                " Lualine status line
+Plug 'tpope/vim-sensible'                       " Sensible defaults
+Plug 'sainnhe/edge'                             " Color schemes
+Plug 'neovim/nvim-lspconfig'                    " LSP
+Plug 'SirVer/ultisnips'                         " Code snippets
+Plug 'honza/vim-snippets'                       " Code snippets
+Plug 'nvim-lua/popup.nvim'                      " Fuzzy finder dependencies
+Plug 'nvim-lua/plenary.nvim'                    " Fuzzy finder dependencies
+Plug 'nvim-telescope/telescope.nvim'            " Fuzzy finder
+Plug 'nvim-telescope/telescope-dap.nvim'        " Debugging integration
 Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'} " Syntax highlighting
-Plug 'nvim-treesitter/playground'                        " Syntax playground
-Plug 'kyazdani42/nvim-web-devicons'                      " File explorer icons
-Plug 'kyazdani42/nvim-tree.lua'                          " File explorer
-Plug 'nvim-telescope/telescope-dap.nvim'                 " Debugging integration
-Plug 'mfussenegger/nvim-dap'                             " Debugging
-Plug 'mfussenegger/nvim-dap-python'                      " Python debugging
-Plug 'pwntester/octo.nvim'                               " GitHub integration
-Plug 'zbirenbaum/copilot.lua'                            " GitHub Copilot
-Plug 'zbirenbaum/copilot-cmp'                            " Copilot completion
-Plug 'hrsh7th/nvim-cmp'                                  " Nvim CMP (Completions)
-Plug 'hrsh7th/cmp-nvim-lsp'                              " LSP completions
-Plug 'hrsh7th/cmp-buffer'                                " Buffer completions
-Plug 'hrsh7th/cmp-path'                                  " Path completions
-Plug 'hrsh7th/cmp-cmdline'                               " Cmdline completions
-Plug 'L3MON4D3/LuaSnip'                                  " Snippet engine
-Plug 'saadparwaiz1/cmp_luasnip'                          " LuaSnip completions
-
+Plug 'nvim-treesitter/playground'               " Syntax playground
+Plug 'kyazdani42/nvim-web-devicons'             " File explorer icons
+Plug 'kyazdani42/nvim-tree.lua'                 " File explorer
+Plug 'mfussenegger/nvim-dap'                    " Debugging
+Plug 'mfussenegger/nvim-dap-python'             " Python debugging
+Plug 'pwntester/octo.nvim'                      " GitHub integration
+Plug 'zbirenbaum/copilot.lua'                   " GitHub Copilot
+Plug 'hrsh7th/nvim-cmp'                         " Nvim CMP (Completions)
+Plug 'hrsh7th/cmp-nvim-lsp'                     " LSP completions
+Plug 'hrsh7th/cmp-buffer'                       " Buffer completions
+Plug 'hrsh7th/cmp-path'                         " Path completions
+Plug 'hrsh7th/cmp-cmdline'                      " Cmdline completions
+Plug 'L3MON4D3/LuaSnip'                         " Snippet engine
+Plug 'saadparwaiz1/cmp_luasnip'                 " LuaSnip completions
+Plug 'zbirenbaum/copilot-cmp'                   " Copilot completion
+Plug 'janoamaral/tokyo-night-tmux'              " Tokyo Night TMUX theme
+Plug 'akinsho/toggleterm.nvim'                  " Toggle Term
 call plug#end()
 
 " Automatically install missing plugins on startup
@@ -102,7 +103,7 @@ require('lualine').setup {
 EOF
 
 " Treesitter Configuration
-lua <<EOF
+lua << EOF
 require'nvim-treesitter.configs'.setup {
   highlight = {
     enable = true
@@ -116,38 +117,7 @@ require'nvim-treesitter.configs'.setup {
 }
 EOF
 
-" Copilot Configuration
-lua << EOF
-require("copilot").setup({
-  suggestion = { enabled = true },
-  panel = { enabled = true },
-})
-require("copilot_cmp").setup()
-EOF
-
-" Nvim CMP Configuration
-lua << EOF
-local cmp = require'cmp'
-cmp.setup({
-  snippet = {
-    expand = function(args)
-      require('luasnip').lsp_expand(args.body)
-    end,
-  },
-  mapping = cmp.mapping.preset.insert({
-    ['<C-b>'] = cmp.mapping.scroll_docs(-4),
-    ['<C-f>'] = cmp.mapping.scroll_docs(4),
-    ['<C-Space>'] = cmp.mapping.complete(),
-    ['<C-e>'] = cmp.mapping.abort(),
-    ['<CR>'] = cmp.mapping.confirm({ select = true }),
-  }),
-  sources = cmp.config.sources({
-    { name = 'nvim_lsp' },
-    { name = 'buffer' },
-  })
-})
-EOF
-
+" Copilot and CMP Configuration
 lua << EOF
 -- Copilot Configuration
 require("copilot").setup({
@@ -174,9 +144,32 @@ cmp.setup({
     ['<CR>'] = cmp.mapping.confirm({ select = true }),
   }),
   sources = cmp.config.sources({
-    { name = 'copilot' },  -- Add copilot source for cmp
+    { name = 'copilot' },    -- Copilot as a completion source
     { name = 'nvim_lsp' },
     { name = 'buffer' },
+  })
+})
+
+-- Additional CMP Source Configuration (Optional)
+cmp.setup.filetype('gitcommit', {
+  sources = cmp.config.sources({
+    { name = 'git' },
+  }, {
+    { name = 'buffer' },
+  })
+})
+
+cmp.setup.cmdline('/', {
+  sources = {
+    { name = 'buffer' }
+  }
+})
+
+cmp.setup.cmdline(':', {
+  sources = cmp.config.sources({
+    { name = 'path' }
+  }, {
+    { name = 'cmdline' }
   })
 })
 EOF
@@ -186,20 +179,20 @@ nnoremap <leader>cp :Copilot panel<CR>
 nnoremap <leader>cs :Copilot status<CR>
 
 " Insert mode keybinding to accept Copilot suggestions
-inoremap <C-Space> copilot#Accept("<CR>")
-
-" Force Copilot suggestion in Insert mode
-inoremap <C-\\> copilot#Accept("<Tab>")
+inoremap <C-Space> <C-R>=copilot#Accept("<CR>")<CR>
+inoremap <C-\> <C-R>=copilot#Accept("<Tab>")<CR>
 
 " LSP Configuration
 lua << EOF
 local nvim_lsp = require('lspconfig')
 local on_attach = function(client, bufnr)
-  require('completion').on_attach()
-  local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
-  local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
-  buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
+  -- Enable completion triggered by <c-x><c-o>
+  vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
+
+  -- Mappings.
   local opts = { noremap=true, silent=true }
+  local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
+
   buf_set_keymap('n', 'gD', '<Cmd>lua vim.lsp.buf.declaration()<CR>', opts)
   buf_set_keymap('n', 'gd', '<Cmd>lua vim.lsp.buf.definition()<CR>', opts)
   buf_set_keymap('n', 'K', '<Cmd>lua vim.lsp.buf.hover()<CR>', opts)
@@ -211,25 +204,25 @@ local on_attach = function(client, bufnr)
   buf_set_keymap('n', '<space>D', '<cmd>lua vim.lsp.buf.type_definition()<CR>', opts)
   buf_set_keymap('n', '<space>rn', '<cmd>lua vim.lsp.buf.rename()<CR>', opts)
   buf_set_keymap('n', 'gr', '<cmd>lua vim.lsp.buf.references()<CR>', opts)
-  buf_set_keymap('n', '<space>e', '<cmd>lua vim.lsp.diagnostic.show_line_diagnostics()<CR>', opts)
-  buf_set_keymap('n', '[d', '<cmd>lua vim.lsp.diagnostic.goto_prev()<CR>', opts)
-  buf_set_keymap('n', ']d', '<cmd>lua vim.lsp.diagnostic.goto_next()<CR>', opts)
-  buf_set_keymap('n', '<space>q', '<cmd>lua vim.lsp.diagnostic.set_loclist()<CR>', opts)
-  if client.resolved_capabilities.document_formatting then
-    buf_set_keymap("n", "<space>f", "<cmd>lua vim.lsp.buf.formatting()<CR>", opts)
-  elseif client.resolved_capabilities.document_range_formatting then
-    buf_set_keymap("n", "<space>f", "<cmd>lua vim.lsp.buf.formatting()<CR>", opts)
+  buf_set_keymap('n', '<space>e', '<cmd>lua vim.diagnostic.open_float()<CR>', opts)
+  buf_set_keymap('n', '[d', '<cmd>lua vim.diagnostic.goto_prev()<CR>', opts)
+  buf_set_keymap('n', ']d', '<cmd>lua vim.diagnostic.goto_next()<CR>', opts)
+  buf_set_keymap('n', '<space>q', '<cmd>lua vim.diagnostic.setloclist()<CR>', opts)
+
+  if client.server_capabilities.documentFormattingProvider then
+    buf_set_keymap("n", "<space>f", "<cmd>lua vim.lsp.buf.format({ async = true })<CR>", opts)
   end
-  if client.resolved_capabilities.document_highlight then
-    require('lspconfig').util.nvim_multiline_command [[
-    :hi LspReferenceRead cterm=bold ctermbg=red guibg=LightYellow
-    :hi LspReferenceText cterm=bold ctermbg=red guibg=LightYellow
-    :hi LspReferenceWrite cterm=bold ctermbg=red guibg=LightYellow
-    augroup lsp_document_highlight
-      autocmd!
-      autocmd CursorHold <buffer> lua vim.lsp.buf.document_highlight()
-      autocmd CursorMoved <buffer> lua vim.lsp.buf.clear_references()
-    augroup END
+
+  if client.server_capabilities.documentHighlightProvider then
+    vim.cmd [[
+      hi LspReferenceRead cterm=bold ctermbg=red guibg=LightYellow
+      hi LspReferenceText cterm=bold ctermbg=red guibg=LightYellow
+      hi LspReferenceWrite cterm=bold ctermbg=red guibg=LightYellow
+      augroup lsp_document_highlight
+        autocmd!
+        autocmd CursorHold <buffer> lua vim.lsp.buf.document_highlight()
+        autocmd CursorMoved <buffer> lua vim.lsp.buf.clear_references()
+      augroup END
     ]]
   end
 end
@@ -242,11 +235,12 @@ for _, lsp in ipairs(servers) do
 end
 EOF
 
-" ---- Custom Keybindings ----
-
+" ---- nvim-tree Configuration ----
 lua << EOF
 require'nvim-tree'.setup {}
 EOF
+
+" ---- Custom Keybindings ----
 
 " General key mappings
 nnoremap <Space>v :e ~/.config/nvim/init.vim<CR>
@@ -258,7 +252,7 @@ nnoremap <leader>gs :Git status<CR>                    " Git status (using fugit
 nnoremap <leader>gd :Git diff<CR>                      " Git diff (using fugitive)
 nnoremap <leader>tt :NvimTreeToggle<CR>                " Toggle file explorer
 nnoremap <leader>e :lua vim.diagnostic.open_float()<CR> " Show diagnostics
-nnoremap <leader>f :lua vim.lsp.buf.formatting()<CR>   " Format code
+nnoremap <leader>f :lua vim.lsp.buf.format({ async = true })<CR>   " Format code
 nnoremap <leader>dr :lua require'dap'.repl.open()<CR>  " Open DAP repl
 
 " Control Keybindings (All modes)
@@ -293,7 +287,7 @@ nnoremap <M-s> :split<CR>                                 " Split window horizon
 
 " Debugging configuration
 nnoremap <silent> <F5> :lua require'dap'.continue()<CR>
-nnoremap <silent> <leader>dd :lua require('dap').continue<CR>
+nnoremap <silent> <leader>dd :lua require('dap').continue()<CR>
 nnoremap <silent> <F10> :lua require'dap'.step_over()<CR>
 nnoremap <silent> <F11> :lua require'dap'.step_into()<CR>
 nnoremap <silent> <F12> :lua require'dap'.step_out()<CR>
@@ -329,23 +323,7 @@ if $LC_TERMINAL ==# 'ShellFish'
     endif
 endif
 
-" Plugin Management with vim-plug
-call plug#begin('~/.config/nvim/plugged')
-
-" Plugins List
-Plug 'nvim-lualine/lualine.nvim'        " Lualine status line
-Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'} " Syntax highlighting
-Plug 'janoamaral/tokyo-night-tmux'      " Tokyo Night TMUX theme
-
-call plug#end()
-
-" Automatically install missing plugins on startup
-autocmd VimEnter *
-  \ if len(filter(values(g:plugs), '!isdirectory(v:val.dir)'))
-  \| PlugInstall --sync | q
-  \| endif
-
-" ---- nvim-dap setup for multiple languages ----
+" ---- nvim-dap Setup for Multiple Languages ----
 lua << EOF
 local dap = require('dap')
 
@@ -406,20 +384,20 @@ dap.configurations.go = {
 
 -- Python configuration
 dap.adapters.python = {
-  type = 'executable';
-  command = 'python';
-  args = { '-m', 'debugpy.adapter' };
+  type = 'executable',
+  command = 'python',
+  args = { '-m', 'debugpy.adapter' },
 }
 
 dap.configurations.python = {
   {
-    type = 'python';
-    request = 'launch';
-    name = "Launch file";
-    program = "${file}";
+    type = 'python',
+    request = 'launch',
+    name = "Launch file",
+    program = "${file}",
     pythonPath = function()
       return '/usr/bin/python'  -- Adjust this to your Python path
-    end;
+    end,
   },
 }
 
@@ -451,17 +429,74 @@ require("dapui").setup()
 
 -- Optional: Virtual text for inline debugging
 require("nvim-dap-virtual-text").setup()
-
 EOF
 
-" ---- nvim-dap keybindings ----
+" ---- nvim-dap Keybindings ----
 lua << EOF
 -- Keybindings for DAP
-vim.api.nvim_set_keymap('n', '<F5>', ":lua require'dap'.continue()<CR>", { noremap = true })
-vim.api.nvim_set_keymap('n', '<F10>', ":lua require'dap'.step_over()<CR>", { noremap = true })
-vim.api.nvim_set_keymap('n', '<F11>', ":lua require'dap'.step_into()<CR>", { noremap = true })
-vim.api.nvim_set_keymap('n', '<F12>', ":lua require'dap'.step_out()<CR>", { noremap = true })
-vim.api.nvim_set_keymap('n', '<leader>b', ":lua require'dap'.toggle_breakpoint()<CR>", { noremap = true })
-vim.api.nvim_set_keymap('n', '<leader>B', ":lua require'dap'.set_breakpoint(vim.fn.input('Breakpoint condition: '))<CR>", { noremap = true })
-vim.api.nvim_set_keymap('n', '<leader>dr', ":lua require'dap'.repl.open()<CR>", { noremap = true })
+vim.api.nvim_set_keymap('n', '<F5>', ":lua require'dap'.continue()<CR>", { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<F10>', ":lua require'dap'.step_over()<CR>", { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<F11>', ":lua require'dap'.step_into()<CR>", { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<F12>', ":lua require'dap'.step_out()<CR>", { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<leader>b', ":lua require'dap'.toggle_breakpoint()<CR>", { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<leader>B', ":lua require'dap'.set_breakpoint(vim.fn.input('Breakpoint condition: '))<CR>", { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<leader>dr', ":lua require'dap'.repl.open()<CR>", { noremap = true, silent = true })
 EOF
+
+" ---- ToggleTerm Configuration ----
+require'toggleterm'.setup{
+  open_mapping = '<C-\\>',
+  direction = 'float',
+  float_opts = {
+    border = 'curved',
+  },
+}
+
+-- Function to search upward for docker-compose.yml
+local function find_docker_compose_dir()
+    local current_dir = vim.fn.expand('%:p:h')  -- Get the directory of the current file
+
+    -- Loop upwards until we find docker-compose.yml or reach the root directory
+    while current_dir do
+        local docker_compose_path = current_dir .. '/docker-compose.yaml'
+
+        if vim.fn.filereadable(docker_compose_path) == 1 then
+            return current_dir  -- Return the directory where docker-compose.yml is found
+        end
+
+        -- Move up to the parent directory
+        local parent_dir = vim.fn.fnamemodify(current_dir, ':h')
+        if parent_dir == current_dir then
+            -- If we're at the root directory, stop searching
+            break
+        end
+        current_dir = parent_dir
+    end
+
+    return nil  -- Return nil if no docker-compose.yml was found
+end
+
+-- Custom command to run Docker Compose in the nearest directory with docker-compose.yaml
+vim.api.nvim_create_user_command('DockerComposeUp', function()
+    local docker_compose_dir = find_docker_compose_dir()
+
+    if docker_compose_dir then
+        vim.fn.jobstart('docker-compose up -d', {
+            cwd = docker_compose_dir,  -- Run the command in the found directory
+            on_exit = function(job_id, exit_code, event_type)
+                print("Docker Compose exited with code: " .. exit_code)
+            end,
+            on_stdout = function(job_id, data, event_type)
+                print("Docker Compose output: " .. vim.fn.join(data, "\n"))
+            end,
+            on_stderr = function(job_id, data, event_type)
+                print("Docker Compose error: " .. vim.fn.join(data, "\n"))
+            end,
+        })
+    else
+        print("No docker-compose.yml found in the current or parent directories.")
+    end
+end, {})
+
+-- Optional: Key mapping for Docker Compose Up
+vim.api.nvim_set_keymap('n', '<leader>du', ':DockerComposeUp<CR>', { noremap = true, silent = true })

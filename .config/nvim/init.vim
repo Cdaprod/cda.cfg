@@ -142,18 +142,21 @@ cmp.setup({
     ['<CR>'] = cmp.mapping.confirm({ select = true }),
   }),
   sources = cmp.config.sources({
+    { name = 'copilot' },  -- Add copilot source for cmp
     { name = 'nvim_lsp' },
     { name = 'buffer' },
   })
 })
 EOF
 
+" Copilot Configuration
 lua << EOF
 -- Copilot Configuration
 require("copilot").setup({
   suggestion = { enabled = true },
   panel = { enabled = true },
 })
+EOF
 
 -- Copilot CMP Configuration
 require("copilot_cmp").setup()

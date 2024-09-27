@@ -21,6 +21,9 @@ export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
 # Path to your Oh My Zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
 
+# Set locally deployed asciinema-server endpoint
+export ASCIINEMA_API_URL=http://192.168.0.25:4000
+
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time Oh My Zsh is loaded, in which case,
 # to know which specific one was loaded, run: echo $RANDOM_THEME
@@ -366,3 +369,66 @@ fi
 alias vim='nvim'
 alias vi='nvim'
 alias v='nvim'
+
+# `fetch_multiple_failed_logs` custom function to get failed GitHub Actions Workflows for 
+# Function to fetch logs from multiple failed workflows
+
+fetch_multiple_failed_logs() {
+    local limit=${1:-3}  # Default to 3 logs, can be adjusted by passing a different number as an argument
+    local log_lines=${2:-20}  # Number of lines from the tail of the log to capture, default to 20
+
+    # Fetch the list of runs and filter only the failed ones using jq
+    local failed_runs=$(gh run list --limit "$limit" --json databaseId,name,displayTitle,conclusion --jq '.[] | select(.conclusion == "failure")')
+
+    # Check if failed runs were found
+    if [ -z "$failed_runs" ]; then
+        echo "No failed runs found or unable to fetch runs. Check repository access and authentication."
+        return
+    fi
+
+    # Iterate over each failed run and fetch the logs
+    echo "$failed_runs" | jq -c '.' | while read -r run; do
+        # Extract details from each JSON object
+        local run_id=$(echo "$run" | jq -r '.databaseId')
+        local workflow_name=$(echo "$run" | jq -r '.name')
+        local display_title=$(echo "$run" | jq -r '.displayTitle')
+
+        # Check if run_id is available before fetching logs
+        if [ -z "$run_id" ]; then
+            echo "Failed to extract run ID from data. Skipping..."
+            continue
+        fi
+
+        # Fetch the full log for each failed run
+        local full_log=$(gh run view "$run_id" --log 2>/dev/null)
+
+        # Capture the last few lines of the log
+        local last_failed_log=$(echo "$full_log" | tail -n "$log_lines")
+
+        # Extract key error lines from the log for better readability
+        local key_errors=$(echo "$full_log" | grep -iE 'error|failed|exception' | tail -n 10)
+
+        # Fetch the failed step names from the run
+        local failed_steps=$(gh run view "$run_id" --log --json jobs --jq '.jobs[].steps[] | select(.conclusion == "failure") | .name' 2>/dev/null)
+
+        # Create a temporary cache file for each log
+        local temp_cache_file=$(mktemp)
+
+        # Write detailed information to the temp cache file
+        {
+            echo "workflow_name=\"$workflow_name\""
+            echo "display_title=\"$display_title\""
+            echo "failed_steps=\"$failed_steps\""
+            echo "last_failed_log=\"$last_failed_log\""
+            echo "key_errors=\"$key_errors\""
+        } > "$temp_cache_file"
+
+        # Output the cache file location and details
+        echo "Log for workflow '$workflow_name' (ID: $run_id) stored in temporary cache file: $temp_cache_file"
+        echo "Workflow Title: $display_title"
+        echo "Failed Steps: $failed_steps"
+    done
+}
+
+# Alias the function to fmfl for quick access
+alias fmfl='fetch_multiple_failed_logs'

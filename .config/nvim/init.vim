@@ -2,7 +2,7 @@
 set mouse=a
 set nocompatible
 set termguicolors
-set number relativenumber          " Corrected 'nu rnu' to 'number relativenumber'
+set number relativenumber          " Changed 'nu rnu' to 'number relativenumber' for clarity
 set completeopt=menuone,noinsert,noselect
 set shortmess+=c
 set expandtab
@@ -73,6 +73,7 @@ Plug 'saadparwaiz1/cmp_luasnip'                 " LuaSnip completions
 Plug 'zbirenbaum/copilot-cmp'                   " Copilot completion
 Plug 'janoamaral/tokyo-night-tmux'              " Tokyo Night TMUX theme
 Plug 'akinsho/toggleterm.nvim'                  " Toggle Term
+Plug 'rcarriga/nvim-dap-ui'                      " DAP UI - Added missing plugin
 call plug#end()
 
 " Automatically install missing plugins on startup
@@ -162,7 +163,7 @@ cmp.setup.filetype('gitcommit', {
   })
 })
 
--- Cmdline completions need to be inside the same Lua block
+-- Cmdline completions
 cmp.setup.cmdline('/', {
   sources = {
     { name = 'buffer' }
@@ -453,7 +454,7 @@ EOF
 
 " ---- ToggleTerm Configuration ----
 lua << EOF
-require'toggleterm'.setup{
+require('toggleterm').setup{
   open_mapping = '<C-\\>',
   direction = 'float',
   float_opts = { 

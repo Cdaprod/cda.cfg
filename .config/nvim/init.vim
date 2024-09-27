@@ -2,12 +2,12 @@
 set mouse=a
 set nocompatible
 set termguicolors
-set nu rnu
+set number relativenumber          " Corrected 'nu rnu' to 'number relativenumber'
 set completeopt=menuone,noinsert,noselect
 set shortmess+=c
 set expandtab
 set smartindent
-set tabstop=4 
+set tabstop=4
 set softtabstop=4
 set cmdheight=2
 set updatetime=50
@@ -31,14 +31,14 @@ nnoremap <C-x> :wq<CR>
 nnoremap <C-c> :q!<CR>
 
 " ---- Plugin Management with vim-plug ----
-let vimplug_exists = expand('~/.con
+let vimplug_exists = expand('~/.config/nvim/autoload/plug.vim')
 if !filereadable(vimplug_exists)
   if !executable('curl')
     echoerr "You have to install curl or first install vim-plug yourself!"
     execute "q!"
   endif
   echo "Installing Vim-Plug..."
-  silent exec "!curl -fLo " . shellescape(vimplug_exists) . " --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim"
+  silent execute "!curl -fLo " . shellescape(vimplug_exists) . " --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim"
   autocmd VimEnter * PlugInstall
 endif
 
@@ -76,10 +76,13 @@ Plug 'akinsho/toggleterm.nvim'                  " Toggle Term
 call plug#end()
 
 " Automatically install missing plugins on startup
-autocmd VimEnter *
-  \ if len(filter(values(g:plugs), '!isdirectory(v:val.dir)'))
-  \| PlugInstall --sync | q
-  \| endif
+augroup auto_install_plugins
+  autocmd!
+  autocmd VimEnter *
+        \ if len(filter(values(g:plugs), '!isdirectory(v:val.dir)'))
+        \| PlugInstall --sync | q
+        \| endif
+augroup END
 
 " ---- Plugin Configuration ----
 
@@ -158,8 +161,8 @@ cmp.setup.filetype('gitcommit', {
     { name = 'buffer' },
   })
 })
-EOF
 
+-- Cmdline completions need to be inside the same Lua block
 cmp.setup.cmdline('/', {
   sources = {
     { name = 'buffer' }
@@ -301,8 +304,12 @@ nnoremap <silent> <leader>dn :lua require('dap-python').test_method()<CR>
 vnoremap <silent> <leader>ds <ESC>:lua require('dap-python').debug_selection()<CR>
 
 " Clean startup no message windows
-autocmd VimEnter * silent! redraw!
-let $PATH = $PATH . ':/usr/bin'
+augroup clean_startup
+  autocmd!
+  autocmd VimEnter * silent! redraw!
+augroup END
+
+let $PATH .= ':/usr/bin'          " Corrected path appending
 
 " Enable TrueColor
 if exists('$COLORTERM')
@@ -311,7 +318,7 @@ if exists('$COLORTERM')
     endif
 endif
 
-" Shellfish Integration
+" ShellFish Integration
 if $LC_TERMINAL ==# 'ShellFish'
     set clipboard=unnamed,unnamedplus  " Use iOS clipboard
 
@@ -332,7 +339,7 @@ local dap = require('dap')
 dap.adapters.node2 = {
   type = 'executable',
   command = 'node',
-  args = {os.getenv('HOME') .. '/.vscode-node-debug2/out/src/nodeDebug.js'},
+  args = {os.getenv("HOME") .. '/.vscode-node-debug2/out/src/nodeDebug.js'},
 }
 
 dap.configurations.javascript = {
@@ -445,24 +452,27 @@ vim.api.nvim_set_keymap('n', '<leader>dr', ":lua require'dap'.repl.open()<CR>", 
 EOF
 
 " ---- ToggleTerm Configuration ----
+lua << EOF
 require'toggleterm'.setup{
   open_mapping = '<C-\\>',
   direction = 'float',
-  float_opts = {
+  float_opts = { 
     border = 'curved',
   },
 }
+EOF
 
--- Function to search upward for docker-compose.yml
+" Function to search upward for docker-compose.yml 
+lua << EOF
 local function find_docker_compose_dir()
     local current_dir = vim.fn.expand('%:p:h')  -- Get the directory of the current file
 
-    -- Loop upwards until we find docker-compose.yml or reach the root directory
-    while current_dir do
+    -- Loop upwards until we find docker-compose.yaml or reach the root directory
+    while current_dir and current_dir ~= '/' do
         local docker_compose_path = current_dir .. '/docker-compose.yaml'
 
         if vim.fn.filereadable(docker_compose_path) == 1 then
-            return current_dir  -- Return the directory where docker-compose.yml is found
+            return current_dir  -- Return the directory where docker-compose.yaml is found
         end
 
         -- Move up to the parent directory
@@ -474,7 +484,7 @@ local function find_docker_compose_dir()
         current_dir = parent_dir
     end
 
-    return nil  -- Return nil if no docker-compose.yml was found
+    return nil  -- Return nil if no docker-compose.yaml was found
 end
 
 -- Custom command to run Docker Compose in the nearest directory with docker-compose.yaml
@@ -488,16 +498,28 @@ vim.api.nvim_create_user_command('DockerComposeUp', function()
                 print("Docker Compose exited with code: " .. exit_code)
             end,
             on_stdout = function(job_id, data, event_type)
-                print("Docker Compose output: " .. vim.fn.join(data, "\n"))
+                if data then
+                    print("Docker Compose output: " .. table.concat(data, "\n"))
+                end
             end,
             on_stderr = function(job_id, data, event_type)
-                print("Docker Compose error: " .. vim.fn.join(data, "\n"))
+                if data then
+                    print("Docker Compose error: " .. table.concat(data, "\n"))
+                end
             end,
         })
     else
-        print("No docker-compose.yml found in the current or parent directories.")
+        print("No docker-compose.yaml found in the current or parent directories.")
     end
 end, {})
 
 -- Optional: Key mapping for Docker Compose Up
 vim.api.nvim_set_keymap('n', '<leader>du', ':DockerComposeUp<CR>', { noremap = true, silent = true })
+EOF
+
+" Open a terminal window on startup
+augroup open_terminal
+  autocmd!
+  autocmd VimEnter * :terminal zsh
+  autocmd TermOpen * startinsert
+augroup END

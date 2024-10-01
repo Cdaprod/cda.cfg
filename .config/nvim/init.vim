@@ -240,9 +240,48 @@ for _, lsp in ipairs(servers) do
 end
 EOF
 
-" ---- nvim-tree Configuration ----
+" ---- nvim-web-devicons and nvim-tree Configuration ----
 lua << EOF
-require'nvim-tree'.setup {}
+require'nvim-web-devicons'.setup {
+	default = true; -- enables default icons for file types 
+}
+
+-- ---- nvim-tree Configuration ----
+require'nvim-tree'.setup {
+    renderer = {
+        icons = {
+            show = {
+                git = true,
+                folder = true,
+                file = true,
+                folder_arrow = true,
+            },
+            glyphs = {
+                default = '',
+                symlink = '',
+                folder = {
+                    arrow_open = '',
+                    arrow_closed = '',
+                    default = '',
+                    open = '',
+                    empty = '',
+                    empty_open = '',
+                    symlink = '',
+                    symlink_open = '',
+                },
+                git = {
+                    unstaged = "✗",
+                    staged = "✓",
+                    unmerged = "",
+                    renamed = "➜",
+                    untracked = "★",
+                    deleted = "",
+                    ignored = "◌",
+                },
+            },
+        },
+    },
+}
 EOF
 
 " ---- Custom Keybindings ----

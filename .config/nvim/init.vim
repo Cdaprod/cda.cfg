@@ -74,6 +74,8 @@ Plug 'zbirenbaum/copilot-cmp'                   " Copilot completion
 Plug 'janoamaral/tokyo-night-tmux'              " Tokyo Night TMUX theme
 Plug 'akinsho/toggleterm.nvim'                  " Toggle Term
 Plug 'rcarriga/nvim-dap-ui'                      " DAP UI - Added missing plugin
+Plug 'nvim-neotest/nvim-nio'                     " Required by nvim-dap-ui
+
 call plug#end()
 
 " Automatically install missing plugins on startup
@@ -240,48 +242,9 @@ for _, lsp in ipairs(servers) do
 end
 EOF
 
-" ---- nvim-web-devicons and nvim-tree Configuration ----
+" ---- nvim-tree Configuration ----
 lua << EOF
-require'nvim-web-devicons'.setup {
-	default = true; -- enables default icons for file types 
-}
-
--- ---- nvim-tree Configuration ----
-require'nvim-tree'.setup {
-    renderer = {
-        icons = {
-            show = {
-                git = true,
-                folder = true,
-                file = true,
-                folder_arrow = true,
-            },
-            glyphs = {
-                default = '',
-                symlink = '',
-                folder = {
-                    arrow_open = '',
-                    arrow_closed = '',
-                    default = '',
-                    open = '',
-                    empty = '',
-                    empty_open = '',
-                    symlink = '',
-                    symlink_open = '',
-                },
-                git = {
-                    unstaged = "✗",
-                    staged = "✓",
-                    unmerged = "",
-                    renamed = "➜",
-                    untracked = "★",
-                    deleted = "",
-                    ignored = "◌",
-                },
-            },
-        },
-    },
-}
+require'nvim-tree'.setup {}
 EOF
 
 " ---- Custom Keybindings ----
@@ -325,51 +288,87 @@ inoremap <C-Space> <cmd>lua require'cmp'.complete()<CR> " Trigger completion
 
 " Alt (Meta) Keybindings (Normal mode)
 nnoremap <M-b> :lua require'dap'.toggle_breakpoint()<CR> " Toggle breakpoint
-nnoremap <M-d> :lua require'dap.ui.widgets'.hover()<CR>  " Show debug hover
+nnoremap <M-d> :lua require'dapui'.widgets.hover()<CR>  " Show debug hover
 nnoremap <M-w> :q<CR>                                    " Close the current window
 nnoremap <M-s> :split<CR>                                 " Split window horizontally
 
 " Debugging configuration
-nnoremap <silent> <F5> :lua require'dap'.continue()<CR>
-nnoremap <silent> <leader>dd :lua require('dap').continue()<CR>
-nnoremap <silent> <F10> :lua require'dap'.step_over()<CR>
-nnoremap <silent> <F11> :lua require'dap'.step_into()<CR>
-nnoremap <silent> <F12> :lua require'dap'.step_out()<CR>
-nnoremap <silent> <leader>b :lua require'dap'.toggle_breakpoint()<CR>
-nnoremap <silent> <leader>B :lua require'dap'.set_breakpoint(vim.fn.input('Breakpoint condition: '))<CR>
-nnoremap <silent> <leader>lp :lua require'dap'.set_breakpoint(nil, nil, vim.fn.input('Log point message: '))<CR>
-nnoremap <silent> <leader>dr :lua require'dap'.repl.open()<CR>
-nnoremap <silent> <leader>dl :lua require'dap'.repl.run_last()<CR>
-nnoremap <silent> <leader>dn :lua require('dap-python').test_method()<CR>
-vnoremap <silent> <leader>ds <ESC>:lua require('dap-python').debug_selection()<CR>
+lua << EOF
+-- Keybindings for DAP
+vim.api.nvim_set_keymap('n', '<F5>', ":lua require'dap'.continue()<CR>", { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<F10>', ":lua require'dap'.step_over()<CR>", { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<F11>', ":lua require'dap'.step_into()<CR>", { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<F12>', ":lua require'dap'.step_out()<CR>", { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<leader>b', ":lua require'dap'.toggle_breakpoint()<CR>", { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<leader>B', ":lua require'dap'.set_breakpoint(vim.fn.input('Breakpoint condition: '))<CR>", { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<leader>dr', ":lua require'dap'.repl.open()<CR>", { noremap = true, silent = true })
+EOF
 
-" Clean startup no message windows
-augroup clean_startup
-  autocmd!
-  autocmd VimEnter * silent! redraw!
-augroup END
+" ---- ToggleTerm Configuration ----
+lua << EOF
+require('toggleterm').setup{
+  open_mapping = '<C-\\>',
+  direction = 'float',
+  float_opts = { 
+    border = 'curved',
+  },
+}
+EOF
 
-let $PATH .= ':/usr/bin'          " Corrected path appending
+" Function to search upward for docker-compose.yml 
+lua << EOF
+local function find_docker_compose_dir()
+    local current_dir = vim.fn.expand('%:p:h')  -- Get the directory of the current file
 
-" Enable TrueColor
-if exists('$COLORTERM')
-    if $COLORTERM ==# 'truecolor'
-        set termguicolors
-    endif
-endif
+    -- Loop upwards until we find docker-compose.yaml or reach the root directory
+    while current_dir and current_dir ~= '/' do
+        local docker_compose_path = current_dir .. '/docker-compose.yaml'
 
-" ShellFish Integration
-if $LC_TERMINAL ==# 'ShellFish'
-    set clipboard=unnamed,unnamedplus  " Use iOS clipboard
+        if vim.fn.filereadable(docker_compose_path) == 1 then
+            return current_dir  -- Return the directory where docker-compose.yaml is found
+        end
 
-    " Ensure ShellFish can handle tmux properly
-    if exists('$TMUX')
-        let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
-        let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
-        " Enable mouse mode in tmux
-        set mouse=a
-    endif
-endif
+        -- Move up to the parent directory
+        local parent_dir = vim.fn.fnamemodify(current_dir, ':h')
+        if parent_dir == current_dir then
+            -- If we're at the root directory, stop searching
+            break
+        end
+        current_dir = parent_dir
+    end
+
+    return nil  -- Return nil if no docker-compose.yaml was found
+end
+
+-- Custom command to run Docker Compose in the nearest directory with docker-compose.yaml
+vim.api.nvim_create_user_command('DockerComposeUp', function()
+    local docker_compose_dir = find_docker_compose_dir()
+
+    if docker_compose_dir then
+        vim.fn.jobstart('docker-compose up -d', {
+            cwd = docker_compose_dir,  -- Run the command in the found directory
+            on_exit = function(job_id, exit_code, event_type)
+                print("Docker Compose exited with code: " .. exit_code)
+            end,
+            on_stdout = function(job_id, data, event_type)
+                if data then
+                    print("Docker Compose output: " .. table.concat(data, "\n"))
+                end
+            end,
+            on_stderr = function(job_id, data, event_type)
+                if data then
+                    print("Docker Compose error: " .. table.concat(data, "\n"))
+                end
+            end,
+        })
+    else
+        print("No docker-compose.yaml found in the current or parent directories.")
+    end
+end, {})
+
+-- Optional: Key mapping for Docker Compose Up
+vim.api.nvim_set_keymap('n', '<leader>du', ':DockerComposeUp<CR>', { noremap = true, silent = true })
+EOF
 
 " ---- nvim-dap Setup for Multiple Languages ----
 lua << EOF
@@ -477,18 +476,18 @@ require("dapui").setup()
 
 -- Optional: Virtual text for inline debugging
 require("nvim-dap-virtual-text").setup()
-EOF
 
-" ---- nvim-dap Keybindings ----
-lua << EOF
--- Keybindings for DAP
-vim.api.nvim_set_keymap('n', '<F5>', ":lua require'dap'.continue()<CR>", { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<F10>', ":lua require'dap'.step_over()<CR>", { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<F11>', ":lua require'dap'.step_into()<CR>", { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<F12>', ":lua require'dap'.step_out()<CR>", { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>b', ":lua require'dap'.toggle_breakpoint()<CR>", { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>B', ":lua require'dap'.set_breakpoint(vim.fn.input('Breakpoint condition: '))<CR>", { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>dr', ":lua require'dap'.repl.open()<CR>", { noremap = true, silent = true })
+-- Setup DAP UI to open automatically
+local dapui = require("dapui")
+dap.listeners.after.event_initialized["dapui_config"] = function()
+  dapui.open()
+end
+dap.listeners.before.event_terminated["dapui_config"] = function()
+  dapui.close()
+end
+dap.listeners.before.event_exited["dapui_config"] = function()
+  dapui.close()
+end
 EOF
 
 " ---- ToggleTerm Configuration ----
@@ -557,7 +556,35 @@ end, {})
 vim.api.nvim_set_keymap('n', '<leader>du', ':DockerComposeUp<CR>', { noremap = true, silent = true })
 EOF
 
-" Open a terminal window on startup
+" ---- Clean startup no message windows ----
+augroup clean_startup
+  autocmd!
+  autocmd VimEnter * silent! redraw!
+augroup END
+
+let $PATH .= ':/usr/bin'          " Corrected path appending
+
+" Enable TrueColor
+if exists('$COLORTERM')
+    if $COLORTERM ==# 'truecolor'
+        set termguicolors
+    endif
+endif
+
+" ShellFish Integration
+if $LC_TERMINAL ==# 'ShellFish'
+    set clipboard=unnamed,unnamedplus  " Use iOS clipboard
+
+    " Ensure ShellFish can handle tmux properly
+    if exists('$TMUX')
+        let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
+        let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
+        " Enable mouse mode in tmux
+        set mouse=a
+    endif
+endif
+
+" ---- Open a terminal window on startup ----
 augroup open_terminal
   autocmd!
   autocmd VimEnter * :terminal zsh

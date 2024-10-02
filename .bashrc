@@ -2,6 +2,11 @@
 # see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
 # for examples
 
+# Zioxide Evalulation
+
+eval "$(zoxide init bash)"
+
+
 # If not running interactively, don't do anything
 case $- in
     *i*) ;;
@@ -88,9 +93,12 @@ fi
 #export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 
 # some more ls aliases
-alias ll='ls -alF'
+alias ll='ls -alF -h'
 alias la='ls -A'
 alias l='ls -CF'
+alias ttt='tree -a -L 3'
+alias tt='tree -a -L 2'
+alias t='tree -a -L 1'
 
 # Add an "alert" alias for long running commands.  Use like so:
 #   sleep 10; alert
@@ -119,6 +127,7 @@ fi
 test -e "$HOME/.shellfishrc" && source "$HOME/.shellfishrc"
 
 complete -C /usr/local/bin/mc mc
+alias cfg='/usr/bin/git --git-dir=/home/cdaprod/.cfg/ --work-tree=/home/cdaprod'
 alias cfg='/usr/bin/git --git-dir=/home/cdaprod/.cfg/ --work-tree=/home/cdaprod'
 alias cfg='/usr/bin/git --git-dir=/home/cdaprod/.cfg/ --work-tree=/home/cdaprod'
 alias cfg='/usr/bin/git --git-dir=/home/cdaprod/.cfg/ --work-tree=/home/cdaprod'

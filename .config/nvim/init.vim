@@ -1,8 +1,8 @@
 " ---- Core Settings ----
-set mouse=a
 set nocompatible
+set mouse=a
 set termguicolors
-set number relativenumber          " Changed 'nu rnu' to 'number relativenumber' for clarity
+set number relativenumber          " Show line numbers relative to the current line
 set completeopt=menuone,noinsert,noselect
 set shortmess+=c
 set expandtab
@@ -13,7 +13,7 @@ set cmdheight=2
 set updatetime=50
 set signcolumn=yes
 set clipboard=unnamed,unnamedplus
-set shortmess+=I          " Skip intro screen
+set shortmess+=I                  " Skip intro screen
 
 " Highlight Yank
 augroup highlight_yank
@@ -30,18 +30,11 @@ nnoremap <C-x> :wq<CR>
 " Map Ctrl + c to quit without saving (force quit)
 nnoremap <C-c> :q!<CR>
 
-" ---- Plugin Management with vim-plug ----
-let vimplug_exists = expand('~/.config/nvim/autoload/plug.vim')
-if !filereadable(vimplug_exists)
-  if !executable('curl')
-    echoerr "You have to install curl or first install vim-plug yourself!"
-    execute "q!"
-  endif
-  echo "Installing Vim-Plug..."
-  silent execute "!curl -fLo " . shellescape(vimplug_exists) . " --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim"
-  autocmd VimEnter * PlugInstall
-endif
+" ---- Disable Unnecessary Providers ----
+let g:loaded_perl_provider = 0
+let g:loaded_ruby_provider = 0
 
+" ---- Plugin Management with vim-plug ----
 call plug#begin('~/.config/nvim/plugged')
 
 " ---- Plugins List ----
@@ -74,15 +67,23 @@ Plug 'zbirenbaum/copilot-cmp'                   " Copilot completion
 Plug 'janoamaral/tokyo-night-tmux'              " Tokyo Night TMUX theme
 Plug 'akinsho/toggleterm.nvim'                  " Toggle Term
 Plug 'rcarriga/nvim-dap-ui'                      " DAP UI - Added missing plugin
+Plug 'nvim-neotest/nvim-nio'                     " Required by nvim-dap-ui
+Plug 'tmux-plugins/tpm'                          " Tmux Plugin Manager
+Plug 'tmux-plugins/tmux-sensible'                " Tmux sensible defaults
+Plug 'tmux-plugins/tmux-resurrect'               " Tmux resurrect
+Plug 'tmux-plugins/tmux-sessionist'              " Tmux session management
+Plug 'tmPlug 'nvim-neotest/nvim-nio'                     " Required by nvim-dap-ui
+
+>>>>>>>+origin/rpi5-1/a
+          " Fuzzy finder
+Plug 'junegunn/fzf.vim'                           " Fzf integration for Vim
+
 call plug#end()
 
 " Automatically install missing plugins on startup
 augroup auto_install_plugins
   autocmd!
-  autocmd VimEnter *
-        \ if len(filter(values(g:plugs), '!isdirectory(v:val.dir)'))
-        \| PlugInstall --sync | q
-        \| endif
+  autocmd VimEnter * if len(filter(values(g:plugs), '!isdirectory(v:val.dir)')) | PlugInstall --sync | q | endif
 augroup END
 
 " ---- Plugin Configuration ----
@@ -91,7 +92,7 @@ augroup END
 lua << EOF
 require('lualine').setup {
   options = {
-    theme = 'onedark',
+    theme = 'tokyo-night',  -- Use Tokyo Night theme for Lualine
     section_separators = {'', ''},
     component_separators = {'', ''}
   },
@@ -110,13 +111,14 @@ EOF
 lua << EOF
 require'nvim-treesitter.configs'.setup {
   highlight = {
-    enable = true
+    enable = true,
+    additional_vim_regex_highlighting = false,
   },
   playground = {
     enable = true,
     disable = {},
     updatetime = 25,
-    persist_queries = false
+    persist_queries = false,
   }
 }
 EOF
@@ -151,6 +153,7 @@ cmp.setup({
     { name = 'copilot' },    -- Copilot as a completion source
     { name = 'nvim_lsp' },
     { name = 'buffer' },
+    { name = 'path' },
   })
 })
 
@@ -242,7 +245,43 @@ EOF
 
 " ---- nvim-tree Configuration ----
 lua << EOF
-require'nvim-tree'.setup {}
+require'nvim-tree'.setup {
+  disable_netrw       = true,
+  hijack_netrw        = true,
+  open_on_setup       = false,
+  ignore_ft_on_setup  = {},
+  auto_close          = true,
+  open_on_tab         = false,
+  hijack_cursor       = false,
+  update_cwd          = true,
+  diagnostics = {
+    enable = true,
+    icons = {
+      hint = "",
+      info = "",
+      warning = "",
+      error = "",
+    },
+  },
+  update_focused_file = {
+    enable  = true,
+    update_cwd = true,
+    ignore_list = {}
+  },
+  system_open = {
+    cmd  = nil,
+    args = {}
+  },
+  view = {
+    width = 30,
+    side = 'left',
+    auto_resize = true,
+    mappings = {
+      custom_only = false,
+      list = {}
+    }
+  }
+}
 EOF
 
 " ---- Custom Keybindings ----
@@ -275,23 +314,7 @@ snoremap <C-c> <Esc>:q!<CR>                            " Force quit without savi
 xnoremap <C-c> <Esc>:q!<CR>                            " Force quit without saving in Visual mode
 onoremap <C-c> <Esc>:q!<CR>                            " Force quit without saving in Operator mode
 
-" Window Navigation and Resizing
-nnoremap <C-h> <C-w>h                                  " Move to left split
-nnoremap <C-j> <C-w>j                                  " Move to below split
-nnoremap <C-k> <C-w>k                                  " Move to above split
-nnoremap <C-l> <C-w>l                                  " Move to right split
-
-" Completion and Other Actions (Insert mode)
-inoremap <C-Space> <cmd>lua require'cmp'.complete()<CR> " Trigger completion
-
-" Alt (Meta) Keybindings (Normal mode)
-nnoremap <M-b> :lua require'dap'.toggle_breakpoint()<CR> " Toggle breakpoint
-nnoremap <M-d> :lua require'dap.ui.widgets'.hover()<CR>  " Show debug hover
-nnoremap <M-w> :q<CR>                                    " Close the current window
-nnoremap <M-s> :split<CR>                                 " Split window horizontally
-
-" Debugging configuration
-nnoremap <silent> <F5> :lua require'dap'.continue()<CR>
+" Wnnoremap <silent> <F5> :lua require'dap'.continue()<CR>
 nnoremap <silent> <leader>dd :lua require('dap').continue()<CR>
 nnoremap <silent> <F10> :lua require'dap'.step_over()<CR>
 nnoremap <silent> <F11> :lua require'dap'.step_into()<CR>
@@ -311,137 +334,8 @@ augroup clean_startup
 augroup END
 
 let $PATH .= ':/usr/bin'          " Corrected path appending
-
-" Enable TrueColor
-if exists('$COLORTERM')
-    if $COLORTERM ==# 'truecolor'
-        set termguicolors
-    endif
-endif
-
-" ShellFish Integration
-if $LC_TERMINAL ==# 'ShellFish'
-    set clipboard=unnamed,unnamedplus  " Use iOS clipboard
-
-    " Ensure ShellFish can handle tmux properly
-    if exists('$TMUX')
-        let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
-        let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
-        " Enable mouse mode in tmux
-        set mouse=a
-    endif
-endif
-
-" ---- nvim-dap Setup for Multiple Languages ----
-lua << EOF
-local dap = require('dap')
-
--- JavaScript/TypeScript configuration
-dap.adapters.node2 = {
-  type = 'executable',
-  command = 'node',
-  args = {os.getenv("HOME") .. '/.vscode-node-debug2/out/src/nodeDebug.js'},
-}
-
-dap.configurations.javascript = {
-  {
-    name = "Launch file",
-    type = "node2",
-    request = "launch",
-    program = "${file}",
-    cwd = vim.fn.getcwd(),
-    sourceMaps = true,
-    protocol = "inspector",
-    console = "integratedTerminal",
-  },
-  {
-    name = "Attach to process",
-    type = "node2",
-    request = "attach",
-    processId = require('dap.utils').pick_process,
-  },
-}
-
-dap.configurations.typescript = dap.configurations.javascript
-
--- Go configuration
-dap.adapters.go = {
-  type = "server",
-  port = "${port}",
-  executable = {
-    command = "dlv",
-    args = { "dap", "-l", "127.0.0.1:${port}" },
-  }
-}
-
-dap.configurations.go = {
-  {
-    type = "go",
-    name = "Debug",
-    request = "launch",
-    program = "${file}",
-  },
-  {
-    type = "go",
-    name = "Attach",
-    mode = "remote",
-    request = "attach",
-    processId = require('dap.utils').pick_process,
-    program = "${file}",
-  }
-}
-
--- Python configuration
-dap.adapters.python = {
-  type = 'executable',
-  command = 'python',
-  args = { '-m', 'debugpy.adapter' },
-}
-
-dap.configurations.python = {
-  {
-    type = 'python',
-    request = 'launch',
-    name = "Launch file",
-    program = "${file}",
-    pythonPath = function()
-      return '/usr/bin/python'  -- Adjust this to your Python path
-    end,
-  },
-}
-
--- React Native / Chrome debugging
-dap.adapters.chrome = {
-  type = "executable",
-  command = "node",
-  args = { os.getenv("HOME") .. "/path-to/vscode-chrome-debug/out/src/chromeDebug.js" }
-}
-
-dap.configurations.javascriptreact = { -- React
-  {
-    name = "Debug React",
-    type = "chrome",
-    request = "launch",
-    program = "${file}",
-    cwd = vim.fn.getcwd(),
-    sourceMaps = true,
-    protocol = "inspector",
-    port = 9222,
-    webRoot = "${workspaceFolder}"
-  }
-}
-
-dap.configurations.typescriptreact = dap.configurations.javascriptreact
-
--- Optional: DAP UI for a better debugging experience
-require("dapui").setup()
-
--- Optional: Virtual text for inline debugging
-require("nvim-dap-virtual-text").setup()
-EOF
-
-" ---- nvim-dap Keybindings ----
-lua << EOF
+>>>>>>>-rpi5-1/aarch64
+emap = tlua << EOF
 -- Keybindings for DAP
 vim.api.nvim_set_keymap('n', '<F5>', ":lua require'dap'.continue()<CR>", { noremap = true, silent = true })
 vim.api.nvim_set_keymap('n', '<F10>', ":lua require'dap'.step_over()<CR>", { noremap = true, silent = true })
@@ -451,33 +345,21 @@ vim.api.nvim_set_keymap('n', '<leader>b', ":lua require'dap'.toggle_breakpoint()
 vim.api.nvim_set_keymap('n', '<leader>B', ":lua require'dap'.set_breakpoint(vim.fn.input('Breakpoint condition: '))<CR>", { noremap = true, silent = true })
 vim.api.nvim_set_keymap('n', '<leader>dr', ":lua require'dap'.repl.open()<CR>", { noremap = true, silent = true })
 EOF
+>>>>>>>+origin/rpi5-1/a
+ind_docker_compose_dir()
+    local current_dir = vim.fn.expand('%:p:h')  -- Get the directory of the current file
 
-" ---- ToggleTerm Configuration ----
-lua << EOF
-require('toggleterm').setup{
-  open_mapping = '<C-\\>',
-  direction = 'float',
-  float_opts = { 
-    border = 'curved',
-  },
-}
-EOF
+    -- Loop upwards until we find docker-compose.yaml or reach the" ShellFish Integration
+if $LC_TERMINAL ==# 'ShellFish'
+    set clipboard=unnamed,unnamedplus  " Use iOS clipboard
+>>>>>>>-rpi5-1/aarch64
 
-" Function to search upward for docker-compose.yml 
+       " Function to search upward for docker-compose.yml 
 lua << EOF
 local function find_docker_compose_dir()
     local current_dir = vim.fn.expand('%:p:h')  -- Get the directory of the current file
-
-    -- Loop upwards until we find docker-compose.yaml or reach the root directory
-    while current_dir and current_dir ~= '/' do
-        local docker_compose_path = current_dir .. '/docker-compose.yaml'
-
-        if vim.fn.filereadable(docker_compose_path) == 1 then
-            return current_dir  -- Return the directory where docker-compose.yaml is found
-        end
-
-        -- Move up to the parent directory
-        local parent_dir = vim.fn.fnamemodify(current_dir, ':h')
+>>>>>>>+origin/rpi5-1/a
+dir = vim.fn.fnamemodify(current_dir, ':h')
         if parent_dir == current_dir then
             -- If we're at the root directory, stop searching
             break
@@ -518,7 +400,35 @@ end, {})
 vim.api.nvim_set_keymap('n', '<leader>du', ':DockerComposeUp<CR>', { noremap = true, silent = true })
 EOF
 
-" Open a terminal window on startup
+" ---- Clean startup no message windows ----
+augroup clean_startup
+  autocmd!
+  autocmd VimEnter * silent! redraw!
+augroup END
+
+let $PATH .= ':/usr/bin'          " Corrected path appending
+
+" Enable TrueColor
+if exists('$COLORTERM')
+    if $COLORTERM ==# 'truecolor'
+        set termguicolors
+    endif
+endif
+
+" ShellFish Integration
+if $LC_TERMINAL ==# 'ShellFish'
+    set clipboard=unnamed,unnamedplus  " Use iOS clipboard
+
+    " Ensure ShellFish can handle tmux properly
+    if exists('$TMUX')
+        let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
+        let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
+        " Enable mouse mode in tmux
+        set mouse=a
+    endif
+endif
+
+" ---- Open a terminal window on startup ----
 augroup open_terminal
   autocmd!
   autocmd VimEnter * :terminal zsh

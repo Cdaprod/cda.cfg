@@ -66,17 +66,13 @@ Plug 'saadparwaiz1/cmp_luasnip'                 " LuaSnip completions
 Plug 'zbirenbaum/copilot-cmp'                   " Copilot completion
 Plug 'janoamaral/tokyo-night-tmux'              " Tokyo Night TMUX theme
 Plug 'akinsho/toggleterm.nvim'                  " Toggle Term
-Plug 'rcarriga/nvim-dap-ui'                      " DAP UI - Added missing plugin
-Plug 'nvim-neotest/nvim-nio'                     " Required by nvim-dap-ui
-Plug 'tmux-plugins/tpm'                          " Tmux Plugin Manager
-Plug 'tmux-plugins/tmux-sensible'                " Tmux sensible defaults
-Plug 'tmux-plugins/tmux-resurrect'               " Tmux resurrect
-Plug 'tmux-plugins/tmux-sessionist'              " Tmux session management
-Plug 'tmPlug 'nvim-neotest/nvim-nio'                     " Required by nvim-dap-ui
-
->>>>>>>+origin/rpi5-1/a
-          " Fuzzy finder
-Plug 'junegunn/fzf.vim'                           " Fzf integration for Vim
+Plug 'rcarriga/nvim-dap-ui'                     " DAP UI
+Plug 'nvim-neotest/nvim-nio'                    " Required by nvim-dap-ui
+Plug 'tmux-plugins/tpm'                         " Tmux Plugin Manager
+Plug 'tmux-plugins/tmux-sensible'               " Tmux sensible defaults
+Plug 'tmux-plugins/tmux-resurrect'              " Tmux resurrect
+Plug 'tmux-plugins/tmux-sessionist'             " Tmux session management
+Plug 'junegunn/fzf.vim'                         " Fzf integration for Vim
 
 call plug#end()
 
@@ -334,7 +330,7 @@ augroup clean_startup
 augroup END
 
 let $PATH .= ':/usr/bin'          " Corrected path appending
->>>>>>>-rpi5-1/aarch64
+
 emap = tlua << EOF
 -- Keybindings for DAP
 vim.api.nvim_set_keymap('n', '<F5>', ":lua require'dap'.continue()<CR>", { noremap = true, silent = true })
@@ -358,7 +354,7 @@ if $LC_TERMINAL ==# 'ShellFish'
 lua << EOF
 local function find_docker_compose_dir()
     local current_dir = vim.fn.expand('%:p:h')  -- Get the directory of the current file
->>>>>>>+origin/rpi5-1/a
+
 dir = vim.fn.fnamemodify(current_dir, ':h')
         if parent_dir == current_dir then
             -- If we're at the root directory, stop searching

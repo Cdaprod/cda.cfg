@@ -248,14 +248,11 @@ vim.api.nvim_set_keymap('n', '<leader>fh', ':Telescope help_tags<CR>', { noremap
 
 -- Nvim-tree Configuration
 require('nvim-tree').setup {
-  disable_netrw       = true,
-  hijack_netrw        = true,
-  open_on_setup       = true,
-  ignore_ft_on_setup  = {},
-  auto_close          = true,
-  open_on_tab         = false,
-  hijack_cursor       = false,
-  update_cwd          = true,
+  disable_netrw = true,
+  hijack_netrw = true,
+  open_on_tab = false,
+  hijack_cursor = false,
+  update_cwd = true,
   diagnostics = {
     enable = true,
     icons = {
@@ -266,22 +263,17 @@ require('nvim-tree').setup {
     },
   },
   update_focused_file = {
-    enable  = true,
+    enable = true,
     update_cwd = true,
     ignore_list = {}
   },
   system_open = {
-    cmd  = nil,
+    cmd = nil,
     args = {}
   },
   view = {
     width = 30,
     side = 'left',
-    auto_resize = true,
-    mappings = {
-      custom_only = false,
-      list = {}
-    }
   }
 }
 

@@ -274,9 +274,20 @@ require('nvim-tree').setup {
   view = {
     width = 30,
     side = 'left',
-  }
+    mappings = {
+      list = {
+        { key = { "<CR>", "o", "<2-LeftMouse>" }, action = "edit" },
+        { key = "v", action = "vsplit" },
+        { key = "x", action = "split" },
+        { key = "t", action = "tabnew" },
+        { key = "r", action = "refresh" },
+      },
+    },
+  },
 }
 
+-- Key Mapping for NvimTree Toggle
+vim.api.nvim_set_keymap('n', '<leader>tt', ':NvimTreeToggle<CR>', { noremap = true, silent = true })
 -- ================================
 --          LSP Configuration
 -- ================================

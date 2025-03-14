@@ -1,5 +1,38 @@
 # Dotfiles Backup and Management
 
+---
+
+## Quick Use of install_script.sh bash script
+
+`curl -sSL https://raw.githubusercontent.com/Cdaprod/cda.cfg/main/install_dotfiles.sh | bash`
+
+or
+
+`RUN curl -sSL https://raw.githubusercontent.com/Cdaprod/cda.cfg/main/install_dotfiles.sh | bash`
+
+---
+
+## dotfiles output instructions
+
+```bash
+❯ cdactl help
+Usage: cdactl [command] [options]
+Commands:
+  1. network    - Manage network connections
+  2. ssh        - SSH into devices
+  3. update     - Update system packages
+  4. backup     - Manage backups
+  5. monitor    - Monitor system resources
+  6. dotfiles   - Manage dotfiles (init, add, pull, sync)
+  7. cred       - Manage credentials (store, retrieve)
+  8. help       - Show this help message
+❯ cdactl dotfiles help
+✖ Invalid dotfiles command. Use: init, add, pull, or sync
+❯ cdactl dotfiles add ~/.oh-my-zsh/
+``` 
+
+---
+
 ## Overview
 This guide outlines the process for backing up and managing dotfiles across multiple servers using a Git bare repository. It enables seamless synchronization and version control of your configuration files.
 
